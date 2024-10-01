@@ -1,10 +1,17 @@
-/// <reference no-default-lib="true"/>
-/// <reference lib="dom" />
-/// <reference lib="deno.ns" />
-/// <reference lib="esnext" />
+import { ActorRuntime } from "@deco/actors";
+import { Counter } from "./counter.ts";
+const portEnv = Deno.env.get("PORT");
+const port = portEnv ? +portEnv : 8000;
 
-import { start } from "$fresh/server.ts";
-import config from "./fresh.config.ts";
-import manifest from "./fresh.gen.ts";
+const rt = new ActorRuntime([Counter]);
 
-await start(manifest, config);
+Deno.serve({
+  handler: (req) => {
+    const url = new URL(req.url);
+    if (url.pathname.startsWith("/actors")) {
+      return rt.fetch(req);
+    }
+    return new Response(null, { status: 200 });
+  },
+  port,
+});
