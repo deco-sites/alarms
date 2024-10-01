@@ -1,4 +1,4 @@
-import { Alarm, Alarms } from "./kv.ts";
+import { Alarm, Alarms } from "./alarms.ts";
 
 const TIMEOUT_MS = 60_000;
 const tryAck = async (alarm: Alarm): Promise<void> => {
@@ -9,14 +9,17 @@ const tryAck = async (alarm: Alarm): Promise<void> => {
       method: "POST",
       signal: abrt.signal,
     });
-    if (response.ok) {
-      await Alarms.ack(alarm);
+    if (!response.ok) {
+      throw new Error(`alarm error: ${response.status} ${response.statusText}`);
     }
+    await Alarms.ack(alarm);
   } catch (error) {
     const retries = await Alarms.getRetries(alarm);
     if (retries === null) {
-      await Alarms.retry(alarm, error.message);
+      console.error(`retrying ${alarm}`, error);
+      await Alarms.retry(alarm, (error as Error).message);
     } else if (retries.count === 10) {
+      console.error(`retrying ${alarm}`, error, retries);
       await Alarms.ack(alarm);
     }
   }

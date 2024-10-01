@@ -25,7 +25,6 @@ export interface Alarm extends CreateAlarmPayload {
   id: string;
 }
 export interface CreateAlarmPayload {
-  id: string;
   url: string;
   triggerAt: number;
 }
@@ -52,7 +51,11 @@ export const Alarms = {
   },
   /******  a1bc3d19-29cd-40c8-9967-6c89db63b5f8  *******/
   ack: async (alarm: Alarm): Promise<void> => {
-    await kv.delete([...PREFIX, alarm.triggerAt, alarm.id]);
+    await kv.atomic().delete([...ALARMS_PREFIX, alarm.id]).delete([
+      ...PREFIX,
+      alarm.triggerAt,
+      alarm.id,
+    ]).commit();
   },
   retry: async (alarm: Alarm, reason: string): Promise<void> => {
     const retry = await kv.get<Retry>([...ALARMS_PREFIX, alarm.id]);
@@ -69,10 +72,11 @@ export const Alarms = {
     return retry?.value;
   },
   next: async function* (): AsyncIterableIterator<Alarm> {
-    const iter = kv.list<Alarm>({
+    const selector = {
       prefix: PREFIX,
       end: [...PREFIX, minutesNow()],
-    });
+    };
+    const iter = kv.list<Alarm>(selector);
 
     for await (const alarm of iter) yield alarm.value;
   },
