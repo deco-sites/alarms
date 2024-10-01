@@ -1,11 +1,11 @@
 import { join } from "@std/path";
 
-const SCHEDULER_KV_DATABASE = Deno.env.get("SCHEDULER_KV_DATABASE") ??
+const ALARMS_KV_DATABASE = Deno.env.get("ALARMS_KV_DATABASE") ??
   join(Deno.cwd(), "kv");
 
-const SCHEDULER_DENO_KV_TOKEN = Deno.env.get("SCHEDULER_DENO_KV_TOKEN");
-SCHEDULER_DENO_KV_TOKEN &&
-  Deno.env.set("DENO_KV_ACCESS_TOKEN", SCHEDULER_DENO_KV_TOKEN);
+const ALAMARS_DENO_KV_TOKEN = Deno.env.get("ALARMS_DENO_KV_TOKEN");
+ALAMARS_DENO_KV_TOKEN &&
+  Deno.env.set("DENO_KV_ACCESS_TOKEN", ALAMARS_DENO_KV_TOKEN);
 function minutesNow(timestamp = Date.now()): number {
   const date = new Date(timestamp);
 
@@ -19,7 +19,7 @@ function minutesNow(timestamp = Date.now()): number {
   return nextMinute.getTime() - 1;
 }
 
-export const kv = await Deno.openKv(SCHEDULER_KV_DATABASE);
+export const kv = await Deno.openKv(ALARMS_KV_DATABASE);
 
 export interface Alarm extends CreateAlarmPayload {
   id: string;
